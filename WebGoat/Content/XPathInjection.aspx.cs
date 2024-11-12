@@ -5,6 +5,7 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Xml;
+using System.Xml.Xsl;
 using System.Xml.XPath;
 
 namespace OWASP.WebGoat.NET
@@ -25,7 +26,22 @@ namespace OWASP.WebGoat.NET
         {
             XmlDocument xDoc = new XmlDocument();
             xDoc.LoadXml(xml);
-            XmlNodeList list = xDoc.SelectNodes("//salesperson[state='" + state + "']");
+            
+            // Create an XPath expression with a variable placeholder
+            string xpathExpression = "//salesperson[state=$state]";
+            XPathExpression expr = xDoc.CreateNavigator().Compile(xpathExpression);
+            
+            // Create an XsltArgumentList and add the user input as a parameter
+            XsltArgumentList args = new XsltArgumentList();
+            args.AddParam("state", "", state);
+            
+            // Create a custom context and set it to the XPath expression
+            CustomContext context = new CustomContext(new NameTable(), args);
+            expr.SetContext(context);
+            
+            // Select nodes using the compiled expression
+            XmlNodeList list = xDoc.SelectNodes(expr);
+            
             if (list.Count > 0)
             {
 
@@ -33,5 +49,25 @@ namespace OWASP.WebGoat.NET
 
         }
     }
+    
+    // Custom context class to resolve variables in XPath expression
+    public class CustomContext : XsltContext
+    {
+        private readonly XsltArgumentList _args;
+        
+        public CustomContext(NameTable nt, XsltArgumentList args) : base(nt)
+        {
+            _args = args;
+        }
+        
+        public override IXsltContextVariable ResolveVariable(string prefix, string name)
+        {
+            return new XsltContextVariable(_args.GetParam(name, ""));
+        }
+        
+        public override bool Whitespace => false;
+        public override bool PreserveWhitespace(XPathNavigator node) => false;
+        public override int CompareDocument(string baseUri, string nextbaseUri) => 0;
+        public override bool ResolveFunction(string prefix, string name, XPathResultType[] ArgTypes, out IXsltContextFunction func) { func = null; return false; }
+    }
 }
-
