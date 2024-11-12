@@ -6,8 +6,8 @@
 <asp:Content ID="Content3" ContentPlaceHolderID="BodyContentPlaceholder" runat="server">
    
     <script type="text/javascript">
-        //var return_url = <%= Request["ReturnUrl"] == null ? "\"\"" : "\"" + Request["ReturnUrl"].ToString() + "\"" %>
-        //alert(return_url)
+        var return_url = '<%= Request["ReturnUrl"] == null ? "" : HttpUtility.JavaScriptStringEncode(Request["ReturnUrl"].ToString()) %>';
+        alert(return_url);
     </script>
 
     <h1 class="title-regular-4 clearfix">WebGoat Coins Customer Login</h1>
